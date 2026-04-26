@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deal Tracker — Reprise d'entreprise</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1419;--sidebar:#161b22;--surface:#1c232c;--surface2:#232b36;
+  --border:#2d3542;--border2:#3d4654;
+  --text:#e8ecf1;--text2:#9aa4b2;--text3:#6b7685;
+  --accent:#4d8bf5;--accent2:#3d7ae5;--accent-bg:#1e2e4d;
+  --green:#4ade80;--green-bg:#1a3328;--green-bd:#2d5a3d;
+  --orange:#fbbf24;--orange-bg:#332612;--orange-bd:#5a4620;
+  --red:#f87171;--red-bg:#331818;--red-bd:#5a2828;
+  --blue:#60a5fa;--blue-bg:#162338;--blue-bd:#2d4a6a;
+  --purple:#a78bfa;--purple-bg:#231a38;--purple-bd:#3d2d5a;
+  font-family:'Inter','Segoe UI',-apple-system,sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh;overflow-x:hidden}
+
+.layout{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--sidebar);border-right:1px solid var(--border);padding:18px 0;flex-shrink:0;display:flex;flex-direction:column}
+.main{flex:1;padding:24px 28px;overflow-x:auto;min-width:0}
+
+.logo{padding:0 18px 18px;border-bottom:1px solid var(--border);margin-bottom:14px}
+.logo-title{font-size:16px;font-weight:700;letter-spacing:-0.3px;display:flex;align-items:center;gap:8px}
+.logo-icon{width:26px;height:26px;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:13px}
+.logo-sub{font-size:11px;color:var(--text3);margin-top:3px;letter-spacing:0.3px}
+
+.nav{padding:0 10px;flex:1}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;cursor:pointer;color:var(--text2);font-size:13px;margin-bottom:2px;transition:all 0.12s;user-select:none}
+.nav-item:hover{background:var(--surface);color:var(--text)}
+.nav-item.active{background:var(--accent-bg);color:var(--accent)}
+.nav-item-icon{width:16px;display:flex;justify-content:center;font-size:14px}
+
+.sidebar-footer{padding:10px;border-top:1px solid var(--border)}
+.btn-new{width:100%;background:var(--accent);color:#fff;border:none;padding:9px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.15s;font-family:inherit}
+.btn-new:hover{background:var(--accent2)}
+
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+.page-title{font-size:22px;font-weight:700;letter-spacing:-0.4px}
+.page-sub{font-size:13px;color:var(--text2);margin-top:3px}
+.page-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+.btn{font-family:inherit;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text);padding:7px 14px;font-size:13px;border-radius:6px;transition:all 0.15s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--surface2);border-color:var(--accent)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:var(--accent2);border-color:var(--accent2)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-danger{color:var(--red);border-color:var(--red-bd)}
+.btn-danger:hover{background:var(--red-bg);border-color:var(--red)}
+.btn-ghost{border:none;background:transparent;color:var(--text2)}
+.btn-ghost:hover{background:var(--surface);color:var(--text)}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:14px}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.card-title{font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px}
+
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:22px}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
+.metric-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:600}
+.metric-value{font-size:26px;font-weight:700;margin-top:4px;letter-spacing:-0.5px}
+.metric-trend{font-size:11px;color:var(--text2);margin-top:3px}
+.metric-accent{color:var(--accent)}
+.metric-green{color:var(--green)}
+.metric-orange{color:var(--orange)}
+
+.deals-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.deals-tbl th{background:var(--surface2);padding:10px 14px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;color:var(--text3);letter-spacing:0.4px;border-bottom:1px solid var(--border)}
+.deals-tbl td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.deals-tbl tr:last-child td{border-bottom:none}
+.deals-tbl tr.clickable{cursor:pointer;transition:background 0.12s}
+.deals-tbl tr.clickable:hover{background:var(--surface2)}
+.deal-name{font-weight:600;color:var(--text)}
+.deal-sector{font-size:11px;color:var(--text3);margin-top:2px}
+.status-chip{display:inline-flex;align-items:center;font-size:11px;padding:3px 9px;border-radius:12px;font-weight:600;border:1px solid}
+.s-contact{color:var(--blue);background:var(--blue-bg);border-color:var(--blue-bd)}
+.s-nda{color:var(--purple);background:var(--purple-bg);border-color:var(--purple-bd)}
+.s-analyse{color:var(--orange);background:var(--orange-bg);border-color:var(--orange-bd)}
+.s-offre{color:var(--accent);background:var(--accent-bg);border-color:var(--accent)}
+.s-negoc{color:var(--orange);background:var(--orange-bg);border-color:var(--orange-bd)}
+.s-closing{color:var(--green);background:var(--green-bg);border-color:var(--green-bd)}
+.s-abandon{color:var(--text3);background:var(--surface2);border-color:var(--border2)}
+
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:100;padding:20px;backdrop-filter:blur(4px)}
+.modal-overlay.active{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-head{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:15px;font-weight:700}
+.modal-body{padding:22px}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px}
+.field input,.field select,.field textarea{width:100%;padding:8px 11px;border:1px solid var(--border2);border-radius:6px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);transition:border 0.15s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent)}
+.field textarea{min-height:60px;resize:vertical}
+.field input[readonly]{background:var(--surface2);color:var(--accent);font-weight:600}
+
+.fiche-head{background:linear-gradient(135deg,var(--surface),var(--surface2));border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:18px}
+.fiche-row{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.fiche-name{font-size:22px;font-weight:700;letter-spacing:-0.4px}
+.fiche-meta{display:flex;gap:16px;margin-top:6px;font-size:12px;color:var(--text2);flex-wrap:wrap}
+
+.tabs{display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid var(--border);overflow-x:auto}
+.tab{padding:9px 14px;font-size:13px;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s;white-space:nowrap;flex-shrink:0;font-family:inherit}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.tab:hover:not(.active){color:var(--text)}
+.panel{display:none}.panel.active{display:block}
+
+.sec{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin:14px 0 8px;padding-top:10px;border-top:1px solid var(--border)}
+.sec:first-child{margin-top:0;padding-top:0;border-top:none}
+
+.ratio-row{display:flex;align-items:center;padding:9px 13px;border-bottom:1px solid var(--border);gap:8px}
+.ratio-row:last-child{border-bottom:none}
+.ratio-name{flex:2;font-size:13px;font-weight:500}
+.ratio-sub{font-size:11px;color:var(--text3)}
+.ratio-vals{display:flex;gap:6px;flex:2;justify-content:flex-end;align-items:center}
+.ratio-val{font-size:13px;font-weight:600;min-width:72px;text-align:right}
+.badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:4px;min-width:58px;text-align:center;border:1px solid}
+.b-green{color:var(--green);background:var(--green-bg);border-color:var(--green-bd)}
+.b-orange{color:var(--orange);background:var(--orange-bg);border-color:var(--orange-bd)}
+.b-red{color:var(--red);background:var(--red-bg);border-color:var(--red-bd)}
+
+.ratio-hdr{display:flex;padding:8px 13px;background:var(--surface2);border-bottom:1px solid var(--border);border-radius:8px 8px 0 0}
+.ratio-hdr span{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3)}
+
+.verdict-box{border-radius:12px;padding:22px;margin-bottom:14px;border:1px solid}
+.v-go{background:var(--green-bg);border-color:var(--green-bd)}
+.v-watch{background:var(--orange-bg);border-color:var(--orange-bd)}
+.v-nogo{background:var(--red-bg);border-color:var(--red-bd)}
+.verdict-title{font-size:18px;font-weight:700;margin-bottom:4px}
+.v-go .verdict-title{color:var(--green)}
+.v-watch .verdict-title{color:var(--orange)}
+.v-nogo .verdict-title{color:var(--red)}
+.sbar{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin:8px 0}
+.sfill{height:100%;border-radius:4px;transition:width 0.6s}
+
+.fourch{background:var(--blue-bg);border:1px solid var(--blue-bd);border-radius:10px;padding:16px}
+.fourch-title{font-size:11px;color:var(--blue);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px}
+.fourch-val{font-size:22px;font-weight:700;color:var(--blue)}
+
+.lbo-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.lbo-tbl th{background:var(--surface2);padding:7px 10px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border)}
+.lbo-tbl td{padding:7px 10px;border-bottom:1px solid var(--border)}
+.lbo-tbl tr:last-child td{border-bottom:none}
+.t-ok{color:var(--green);font-weight:600}
+.t-warn{color:var(--orange);font-weight:600}
+.t-ko{color:var(--red);font-weight:600}
+
+.alert{padding:10px 14px;border-radius:7px;font-size:13px;margin-bottom:8px;border:1px solid}
+.a-info{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-bd)}
+.a-warn{background:var(--orange-bg);color:var(--orange);border-color:var(--orange-bd)}
+.a-red{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
+.a-green{background:var(--green-bg);color:var(--green);border-color:var(--green-bd)}
+
+.empty{text-align:center;padding:48px 20px;color:var(--text3)}
+.empty-icon{font-size:40px;margin-bottom:10px;opacity:0.5}
+.empty-title{font-size:15px;color:var(--text2);margin-bottom:5px}
+.empty-sub{font-size:12px}
+
+.source-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.source-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;transition:all 0.15s}
+.source-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.source-card h4{font-size:14px;font-weight:600;margin-bottom:5px}
+.source-card p{font-size:12px;color:var(--text2);margin-bottom:10px}
+.source-card a{color:var(--accent);text-decoration:none;font-size:12px;font-weight:500}
+
+/* IMPORT IA */
+.api-banner{border-radius:8px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.api-banner.need{background:var(--blue-bg);border:1px solid var(--blue-bd)}
+.api-banner.ok{background:var(--green-bg);border:1px solid var(--green-bd)}
+.api-body{flex:1;min-width:200px}
+.api-title{font-size:13px;font-weight:600}
+.api-need .api-title{color:var(--blue)}
+.api-ok .api-title{color:var(--green)}
+.api-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.api-row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.api-row input{flex:1;min-width:200px;padding:6px 10px;border:1px solid var(--border2);border-radius:5px;font-size:12px;font-family:monospace;background:var(--bg);color:var(--text)}
+
+.drop-zone{border:2px dashed var(--border2);border-radius:10px;padding:32px 20px;text-align:center;transition:all 0.2s;cursor:pointer;background:var(--surface)}
+.drop-zone:hover,.drop-zone.over{border-color:var(--accent);background:var(--accent-bg)}
+.drop-icon{font-size:34px;margin-bottom:8px}
+.drop-title{font-size:15px;font-weight:600;margin-bottom:4px}
+.drop-sub{font-size:12px;color:var(--text2)}
+.drop-formats{display:flex;gap:6px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+.fmt{font-size:11px;padding:2px 9px;border-radius:4px;font-weight:600;border:1px solid}
+.fmt-xl{background:var(--green-bg);color:var(--green);border-color:var(--green-bd)}
+.fmt-pdf{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
+.fmt-csv{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-bd)}
+
+.file-list{margin-top:14px}
+.file-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface2);border-radius:6px;margin-bottom:6px;border:1px solid var(--border)}
+.file-icon{font-size:18px;flex-shrink:0}
+.file-info{flex:1;min-width:0}
+.file-name{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-size{font-size:11px;color:var(--text3)}
+.file-status{font-size:11px;font-weight:600;padding:2px 9px;border-radius:4px;flex-shrink:0;border:1px solid}
+.st-wait{color:var(--text2);background:var(--surface);border-color:var(--border)}
+.st-read{color:var(--blue);background:var(--blue-bg);border-color:var(--blue-bd)}
+.st-ok{color:var(--green);background:var(--green-bg);border-color:var(--green-bd)}
+.st-err{color:var(--red);background:var(--red-bg);border-color:var(--red-bd)}
+.pbar{height:3px;background:var(--border);border-radius:2px;margin-top:4px;overflow:hidden}
+.pfill{height:100%;background:var(--accent);transition:width 0.4s}
+
+.log-box{background:#0a0d12;color:#a8d5a2;font-family:monospace;font-size:11px;border-radius:6px;padding:12px;max-height:180px;overflow-y:auto;margin-top:10px;line-height:1.6;border:1px solid var(--border)}
+.lok{color:#6dbf6d}.lwarn{color:#f0c060}.lerr{color:#e88888}.linfo{color:#80b8f0}
+
+.preview-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.preview-tbl td{padding:5px 12px;border-bottom:1px solid var(--border)}
+.preview-tbl td:first-child{color:var(--text3);width:55%}
+.preview-tbl td:last-child{font-weight:600;text-align:right;color:var(--text)}
+.preview-tbl tr:last-child td{border-bottom:none}
+
+@media(max-width:820px){
+  .layout{flex-direction:column}
+  .sidebar{width:100%;padding:10px 0}
+  .nav{display:flex;gap:2px;overflow-x:auto;padding:0 8px}
+  .nav-item{flex-shrink:0}
+  .sidebar-footer{display:none}
+  .grid2,.grid3,.grid4{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-title"><div class="logo-icon">D</div> Deal Tracker</div>
+      <div class="logo-sub">Reprise d'entreprise</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-item active" onclick="showView('dashboard')"><span class="nav-item-icon">◎</span> Dashboard</div>
+      <div class="nav-item" onclick="showView('deals')"><span class="nav-item-icon">≡</span> Mes deals</div>
+      <div class="nav-item" onclick="showView('sourcing')"><span class="nav-item-icon">⌕</span> Sourcing</div>
+      <div class="nav-item" onclick="showView('stats')"><span class="nav-item-icon">◈</span> Statistiques</div>
+      <div class="nav-item" onclick="showView('settings')"><span class="nav-item-icon">⚙</span> Paramètres</div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-new" onclick="openNewDeal()">+ Nouveau deal</button>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div id="view-dashboard" class="view">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Dashboard</div>
+          <div class="page-sub">Vue d'ensemble de vos opérations de reprise</div>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-primary" onclick="openNewDeal()">+ Nouveau deal</button>
+        </div>
+      </div>
+      <div class="metrics" id="metrics"></div>
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Derniers deals</div>
+          <button class="btn btn-sm" onclick="showView('deals')">Voir tout →</button>
+        </div>
+        <div id="recent-deals"></div>
+      </div>
+    </div>
+
+    <!-- DEALS LIST -->
+    <div id="view-deals" class="view" style="display:none">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Mes deals</div>
+          <div class="page-sub">Tous vos dossiers de reprise</div>
+        </div>
+        <div class="page-actions">
+          <select id="filterStatus" onchange="renderDealsList()" style="padding:7px 11px;border:1px solid var(--border2);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;font-family:inherit">
+            <option value="">Tous les statuts</option>
+            <option value="contact">À contacter / 1er contact</option>
+            <option value="nda">NDA signé</option>
+            <option value="analyse">Analyse en cours</option>
+            <option value="offre">Offre émise</option>
+            <option value="negoc">Négociation</option>
+            <option value="closing">Closing</option>
+            <option value="abandon">Abandonné</option>
+          </select>
+          <button class="btn btn-primary" onclick="openNewDeal()">+ Nouveau deal</button>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow-x:auto">
+        <table class="deals-tbl">
+          <thead><tr><th>Société</th><th>Secteur</th><th>CA</th><th>Prix visé</th><th>Statut</th><th>Verdict</th><th>MAJ</th></tr></thead>
+          <tbody id="deals-tbody"></tbody>
+        </table>
+        <div id="deals-empty" class="empty" style="display:none">
+          <div class="empty-icon">◇</div>
+          <div class="empty-title">Aucun deal pour le moment</div>
+          <div class="empty-sub">Cliquez sur "+ Nouveau deal" pour commencer</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SOURCING -->
+    <div id="view-sourcing" class="view" style="display:none">
+      <div class="page-header">
+        <div><div class="page-title">Sourcing</div><div class="page-sub">Plateformes pour trouver des entreprises à céder</div></div>
+      </div>
+      <div class="source-grid">
+        <div class="source-card"><h4>TransEntreprise</h4><p>Plateforme officielle des CCI pour les cessions d'entreprises en France. 6000+ annonces.</p><a href="https://www.transentreprise.com" target="_blank" rel="noopener">Rechercher →</a></div>
+        <div class="source-card"><h4>Fusacq</h4><p>Plateforme B2B de cession-acquisition. Annonces qualifiées, réseau de conseils.</p><a href="https://www.fusacq.com" target="_blank" rel="noopener">Rechercher →</a></div>
+        <div class="source-card"><h4>BPI Cession</h4><p>Place de marché officielle de BPI France pour la transmission d'entreprises.</p><a href="https://www.bpifrance.fr" target="_blank" rel="noopener">Rechercher →</a></div>
+        <div class="source-card"><h4>CRA</h4><p>Cédants & Repreneurs d'Affaires — association référence pour la reprise en France.</p><a href="https://www.cra.asso.fr" target="_blank" rel="noopener">Rechercher →</a></div>
+        <div class="source-card"><h4>Place des Entreprises</h4><p>Plateforme gouvernementale pour la reprise et la cession de PME françaises.</p><a href="https://place-des-entreprises.beta.gouv.fr" target="_blank" rel="noopener">Rechercher →</a></div>
+        <div class="source-card"><h4>Infogreffe</h4><p>Données officielles du greffe : bilans, comptes annuels, informations légales.</p><a href="https://www.infogreffe.fr" target="_blank" rel="noopener">Consulter →</a></div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div id="view-stats" class="view" style="display:none">
+      <div class="page-header"><div><div class="page-title">Statistiques</div><div class="page-sub">Analyse de votre pipeline</div></div></div>
+      <div id="stats-content"></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="view-settings" class="view" style="display:none">
+      <div class="page-header"><div><div class="page-title">Paramètres</div><div class="page-sub">Configuration et données</div></div></div>
+
+      <div class="card">
+        <div class="card-head"><div class="card-title">Clé API Anthropic (import IA)</div></div>
+        <p style="color:var(--text2);font-size:13px;margin-bottom:10px">Pour l'import automatique de bilans, comptes de résultat et liasses fiscales par IA. Créez votre clé sur <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent)">console.anthropic.com</a> → API Keys. La clé est stockée uniquement dans votre navigateur.</p>
+        <div class="api-row">
+          <input type="password" id="settingsApiKey" placeholder="sk-ant-api03-..." autocomplete="off">
+          <button class="btn btn-primary btn-sm" onclick="saveApiKey()">Enregistrer</button>
+          <button class="btn btn-sm" onclick="clearApiKey()">Effacer</button>
+        </div>
+        <div id="apiStatus" style="margin-top:10px;font-size:12px"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="card-title">Sauvegarde des données</div></div>
+        <p style="color:var(--text2);font-size:13px;margin-bottom:12px">Vos données sont stockées localement dans votre navigateur. Exportez-les régulièrement.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" onclick="exportData()">📥 Exporter</button>
+          <button class="btn" onclick="document.getElementById('importFile').click()">📤 Importer</button>
+          <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this.files[0])">
+          <button class="btn btn-danger" onclick="clearAllData()">🗑 Tout effacer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FICHE -->
+    <div id="view-fiche" class="view" style="display:none">
+      <div style="margin-bottom:14px">
+        <button class="btn btn-ghost btn-sm" onclick="showView('deals')">← Retour à la liste</button>
+      </div>
+
+      <div class="fiche-head">
+        <div class="fiche-row">
+          <div>
+            <div class="fiche-name" id="fiche-name">—</div>
+            <div class="fiche-meta" id="fiche-meta"></div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <select id="fiche-status" onchange="updateFicheStatus()" style="padding:7px 11px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;font-family:inherit">
+              <option value="contact">À contacter / 1er contact</option>
+              <option value="nda">NDA signé</option>
+              <option value="analyse">Analyse en cours</option>
+              <option value="offre">Offre émise</option>
+              <option value="negoc">Négociation</option>
+              <option value="closing">Closing</option>
+              <option value="abandon">Abandonné</option>
+            </select>
+            <button class="btn btn-danger btn-sm" onclick="deleteCurrentDeal()">Supprimer</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="showTab('info')">Infos</div>
+        <div class="tab" onclick="showTab('import')">📁 Import IA</div>
+        <div class="tab" onclick="showTab('input')">✏️ Saisie</div>
+        <div class="tab" onclick="showTab('retraite')">⚙️ Retraitements</div>
+        <div class="tab" onclick="showTab('ratios')">📊 Ratios</div>
+        <div class="tab" onclick="showTab('verdict')">🏁 Verdict</div>
+        <div class="tab" onclick="showTab('notes')">📝 Notes</div>
+      </div>
+
+      <!-- INFO -->
+      <div id="panel-info" class="panel active">
+        <div class="card">
+          <div class="card-head"><div class="card-title">Informations générales</div><button class="btn btn-sm btn-primary" onclick="saveCurrentDeal()">💾 Enregistrer</button></div>
+          <div class="grid2">
+            <div class="field"><label>Nom de la société</label><input type="text" id="f_nom" oninput="markDirty()"></div>
+            <div class="field"><label>SIREN</label><input type="text" id="f_siren" oninput="markDirty()"></div>
+          </div>
+          <div class="grid2">
+            <div class="field"><label>Secteur</label>
+              <select id="f_secteur" onchange="markDirty()">
+                <option value="commerce">Commerce / Distribution</option>
+                <option value="industrie">Industrie / Fabrication</option>
+                <option value="services" selected>Services</option>
+                <option value="restauration">Restauration / HCR</option>
+                <option value="batiment">BTP / Bâtiment</option>
+                <option value="sante">Santé / Médical</option>
+                <option value="autre">Autre</option>
+              </select>
+            </div>
+            <div class="field"><label>Forme juridique</label><input type="text" id="f_forme" placeholder="SARL, SAS..." oninput="markDirty()"></div>
+          </div>
+          <div class="grid2">
+            <div class="field"><label>Ville</label><input type="text" id="f_ville" oninput="markDirty()"></div>
+            <div class="field"><label>Effectif</label><input type="number" id="f_effectif" oninput="markDirty()"></div>
+          </div>
+          <div class="sec">Contact cédant</div>
+          <div class="grid2">
+            <div class="field"><label>Nom du cédant</label><input type="text" id="f_cedant" oninput="markDirty()"></div>
+            <div class="field"><label>Email</label><input type="text" id="f_email" oninput="markDirty()"></div>
+          </div>
+          <div class="grid2">
+            <div class="field"><label>Téléphone</label><input type="text" id="f_tel" oninput="markDirty()"></div>
+            <div class="field"><label>Source du deal</label><input type="text" id="f_source" placeholder="TransEntreprise, CRA..." oninput="markDirty()"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- IMPORT IA -->
+      <div id="panel-import" class="panel">
+        <div class="api-banner need" id="apiBanner">
+          <div style="font-size:20px">🔑</div>
+          <div class="api-body">
+            <div class="api-title" id="apiTitle">Clé API Anthropic requise pour l'import intelligent</div>
+            <div class="api-sub">Créez-la sur <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent)">console.anthropic.com</a> · Stockée localement</div>
+            <div class="api-row">
+              <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off">
+              <button class="btn btn-primary btn-sm" onclick="saveApiKeyFromImport()">Enregistrer</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><div class="card-title">Déposez les documents financiers du cédant</div></div>
+          <div class="drop-zone" id="dropZone"
+            onclick="document.getElementById('fileInput').click()"
+            ondragover="event.preventDefault();this.classList.add('over')"
+            ondragleave="this.classList.remove('over')"
+            ondrop="event.preventDefault();this.classList.remove('over');handleFiles(event.dataTransfer.files)">
+            <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.pdf,.csv" onchange="handleFiles(this.files)" style="display:none">
+            <div class="drop-icon">📂</div>
+            <div class="drop-title">Glissez vos fichiers ou cliquez</div>
+            <div class="drop-sub">Bilan · Compte de résultat · Liasses fiscales 2050/2051/2052</div>
+            <div class="drop-formats">
+              <span class="fmt fmt-xl">XLSX / XLS</span>
+              <span class="fmt fmt-pdf">PDF</span>
+              <span class="fmt fmt-csv">CSV</span>
+            </div>
+          </div>
+          <div id="fileList" class="file-list"></div>
+        </div>
+
+        <div class="card" id="logCard" style="display:none">
+          <div class="card-head"><div class="card-title">Extraction en cours</div></div>
+          <div id="logBox" class="log-box"></div>
+          <div style="display:flex;gap:10px;align-items:center;margin-top:10px">
+            <div class="pbar" style="flex:1;height:6px"><div id="pfill" class="pfill" style="width:0%"></div></div>
+            <span id="plabel" style="font-size:12px;color:var(--text2);min-width:34px">0%</span>
+          </div>
+        </div>
+
+        <div class="card" id="previewCard" style="display:none">
+          <div class="card-head"><div class="card-title">Données extraites — vérifiez avant d'appliquer</div></div>
+          <div style="overflow-x:auto;background:var(--surface2);border-radius:6px;border:1px solid var(--border)">
+            <table class="preview-tbl" id="previewTable"></table>
+          </div>
+          <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="applyExtracted();showTab('input')">✓ Appliquer aux champs</button>
+            <button class="btn" onclick="applyExtracted();computeAll(true);">▶ Appliquer et analyser</button>
+            <button class="btn" onclick="resetImport()">↺ Recommencer</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- INPUT -->
+      <div id="panel-input" class="panel">
+        <div class="card">
+          <div class="card-head"><div class="card-title">Données financières</div><button class="btn btn-sm btn-primary" onclick="computeAndSave()">▶ Analyser & Enregistrer</button></div>
+          <div class="grid2">
+            <div>
+              <div class="sec">Compte de résultat</div>
+              <div class="grid3">
+                <div class="field"><label>CA N-2</label><input type="number" id="ca2" value="0" oninput="markDirty()"></div>
+                <div class="field"><label>CA N-1</label><input type="number" id="ca1" value="0" oninput="markDirty()"></div>
+                <div class="field"><label>CA N</label><input type="number" id="ca0" value="0" oninput="markDirty()"></div>
+              </div>
+              <div class="grid3">
+                <div class="field"><label>Achats+Ext. N-2</label><input type="number" id="achats2" value="0" oninput="markDirty()"></div>
+                <div class="field"><label>Achats+Ext. N-1</label><input type="number" id="achats1" value="0" oninput="markDirty()"></div>
+                <div class="field"><label>Achats+Ext. N</label><input type="number" id="achats0" value="0" oninput="markDirty()"></div>
+              </div>
+              <div class="grid3">
+                <div class="field"><label>Salaires N-2</label><input type="number" id="sal2" value="0" oninput="markDirty()"></div>
+                <div class="field"><label>Salaires N-1</label><input type="number" id="sal1" value="0" oninput="markDirty()"></div>
+                <div class="field"><label>Salaires N</label><input type="number" id="sal0" value="0" oninput="markDirty()"></div>
+              </div>
+              <div class="grid3">
+                <div class="field"><label>Amort. N-2</label><input type="number" id="amort2" value="0" oninput="markDirty()"></div>
+                <div class="field"><label>Amort. N-1</label><input type="number" id="amort1" value="0" oninput="markDirty()"></div>
+                <div class="field"><label>Amort. N</label><input type="number" id="amort0" value="0" oninput="markDirty()"></div>
+              </div>
+              <div class="grid3">
+                <div class="field"><label>Résultat exploit. N-2</label><input type="number" id="rex2" value="0" oninput="markDirty()"></div>
+                <div class="field"><label>Résultat exploit. N-1</label><input type="number" id="rex1" value="0" oninput="markDirty()"></div>
+                <div class="field"><label>Résultat exploit. N</label><input type="number" id="rex0" value="0" oninput="markDirty()"></div>
+              </div>
+              <div class="grid3">
+                <div class="field"><label>Résultat net N-2</label><input type="number" id="rn2" value="0" oninput="markDirty()"></div>
+                <div class="field"><label>Résultat net N-1</label><input type="number" id="rn1" value="0" oninput="markDirty()"></div>
+                <div class="field"><label>Résultat net N</label><input type="number" id="rn0" value="0" oninput="markDirty()"></div>
+              </div>
+            </div>
+            <div>
+              <div class="sec">Bilan (année N)</div>
+              <div class="grid2">
+                <div class="field"><label>Actif immobilisé</label><input type="number" id="bi_immo" value="0" oninput="markDirty()"></div>
+                <div class="field"><label>Stocks</label><input type="number" id="bi_stocks" value="0" oninput="markDirty()"></div>
+              </div>
+              <div class="grid2">
+                <div class="field"><label>Créances clients</label><input type="number" id="bi_clients" value="0" oninput="markDirty()"></div>
+                <div class="field"><label>Autres créances</label><input type="number" id="bi_acreances" value="0" oninput="markDirty()"></div>
+              </div>
+              <div class="grid2">
+                <div class="field"><label>Disponibilités</label><input type="number" id="bi_dispo" value="0" oninput="markDirty()"></div>
+                <div class="field"><label>VMP</label><input type="number" id="bi_vmp" value="0" oninput="markDirty()"></div>
+              </div>
+              <div class="grid2">
+                <div class="field"><label>Capitaux propres</label><input type="number" id="bi_cp" value="0" oninput="markDirty()"></div>
+                <div class="field"><label>Dettes fin. LT</label><input type="number" id="bi_dflt" value="0" oninput="markDirty()"></div>
+              </div>
+              <div class="grid2">
+                <div class="field"><label>Dettes fournisseurs</label><input type="number" id="bi_fourn" value="0" oninput="markDirty()"></div>
+                <div class="field"><label>Dettes fisc./soc.</label><input type="number" id="bi_dfis" value="0" oninput="markDirty()"></div>
+              </div>
+              <div class="grid2">
+                <div class="field"><label>Autres dettes CT</label><input type="number" id="bi_act" value="0" oninput="markDirty()"></div>
+                <div class="field"><label>Provisions</label><input type="number" id="bi_prov" value="0" oninput="markDirty()"></div>
+              </div>
+              <div class="sec">Paramètres LBO</div>
+              <div class="grid2">
+                <div class="field"><label>Prix d'acquisition visé</label><input type="number" id="prix_acq" value="0" oninput="markDirty()"></div>
+                <div class="field"><label>Durée LBO</label>
+                  <select id="duree_lbo" onchange="markDirty()">
+                    <option value="5">5 ans</option><option value="7" selected>7 ans</option><option value="10">10 ans</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid2">
+                <div class="field"><label>Taux emprunt (%)</label><input type="number" id="taux_lbo" value="5.5" step="0.1" oninput="markDirty()"></div>
+                <div class="field"><label>Multiple EBE</label><input type="number" id="mult_ebe" value="4.5" step="0.5" oninput="markDirty()"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RETRAITE -->
+      <div id="panel-retraite" class="panel">
+        <div class="card">
+          <div class="card-head"><div class="card-title">Retraitements de normalisation</div><button class="btn btn-sm btn-primary" onclick="computeAndSave()">▶ Recalculer</button></div>
+          <p style="color:var(--text2);font-size:12px;margin-bottom:14px">Pour calculer l'EBE et la CAF réels, indépendamment des choix du dirigeant : salaire normalisé, avantages en nature, loyer fictif, charges non récurrentes.</p>
+          <div class="grid3">
+            <div>
+              <div class="sec">N-2</div>
+              <div class="field"><label>Salaire dirigeant norm.</label><input type="number" id="sal_dir2" value="0" oninput="calcR();markDirty()"></div>
+              <div class="field"><label>Avantages nature</label><input type="number" id="avn2" value="0" oninput="calcR();markDirty()"></div>
+              <div class="field"><label>Autres retr.</label><input type="number" id="autre2" value="0" oninput="calcR();markDirty()"></div>
+              <div class="field"><label>Total N-2</label><input type="number" id="total_retrait2" value="0" readonly></div>
+            </div>
+            <div>
+              <div class="sec">N-1</div>
+              <div class="field"><label>Salaire dirigeant norm.</label><input type="number" id="sal_dir1" value="0" oninput="calcR();markDirty()"></div>
+              <div class="field"><label>Avantages nature</label><input type="number" id="avn1" value="0" oninput="calcR();markDirty()"></div>
+              <div class="field"><label>Autres retr.</label><input type="number" id="autre1" value="0" oninput="calcR();markDirty()"></div>
+              <div class="field"><label>Total N-1</label><input type="number" id="total_retrait1" value="0" readonly></div>
+            </div>
+            <div>
+              <div class="sec">N</div>
+              <div class="field"><label>Salaire dirigeant norm.</label><input type="number" id="sal_dir0" value="0" oninput="calcR();markDirty()"></div>
+              <div class="field"><label>Loyer fictif</label><input type="number" id="loyer" value="0" oninput="calcR();markDirty()"></div>
+              <div class="field"><label>Charges non récur.</label><input type="number" id="non_rec" value="0" oninput="calcR();markDirty()"></div>
+              <div class="field"><label>Avantages nature</label><input type="number" id="avn0" value="0" oninput="calcR();markDirty()"></div>
+              <div class="field"><label>Autres retr.</label><input type="number" id="autre0" value="0" oninput="calcR();markDirty()"></div>
+              <div class="field"><label>Total N</label><input type="number" id="total_retrait0" value="0" readonly></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RATIOS -->
+      <div id="panel-ratios" class="panel">
+        <div id="ratios-content"><div class="alert a-info">Saisissez les données ou importez des documents, puis cliquez sur ▶ Analyser.</div></div>
+      </div>
+
+      <!-- VERDICT -->
+      <div id="panel-verdict" class="panel">
+        <div id="verdict-content"><div class="alert a-info">Lancez l'analyse pour générer le verdict LBO.</div></div>
+      </div>
+
+      <!-- NOTES -->
+      <div id="panel-notes" class="panel">
+        <div class="card">
+          <div class="card-head"><div class="card-title">Notes & suivi</div><button class="btn btn-sm btn-primary" onclick="saveCurrentDeal()">💾 Enregistrer</button></div>
+          <div class="field"><label>Notes libres</label><textarea id="f_notes" rows="8" placeholder="Compte-rendu d'entretien, points d'attention, prochaines étapes..." oninput="markDirty()"></textarea></div>
+          <div class="field"><label>Prochaine action</label><input type="text" id="f_next" placeholder="Ex : RDV le 15/05 avec le cédant" oninput="markDirty()"></div>
+          <div class="field"><label>Date prochaine action</label><input type="date" id="f_next_date" oninput="markDirty()"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL NEW DEAL -->
+<div class="modal-overlay" id="modalNewDeal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Nouveau deal</div>
+      <button class="btn-ghost btn" onclick="closeModal()" style="padding:4px 8px">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Nom de la société *</label><input type="text" id="new_nom" placeholder="Ex : SARL Martin & Fils"></div>
+      <div class="grid2">
+        <div class="field"><label>Secteur</label>
+          <select id="new_secteur">
+            <option value="commerce">Commerce</option>
+            <option value="industrie">Industrie</option>
+            <option value="services" selected>Services</option>
+            <option value="restauration">Restauration</option>
+            <option value="batiment">BTP</option>
+            <option value="sante">Santé</option>
+            <option value="autre">Autre</option>
+          </select>
+        </div>
+        <div class="field"><label>Ville</label><input type="text" id="new_ville"></div>
+      </div>
+      <div class="field"><label>Source</label><input type="text" id="new_source" placeholder="TransEntreprise, CRA, réseau..."></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="createDeal()">Créer le deal</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let state = { deals: [], currentId: null, dirty: false };
+let extractedData = {};
+
+function loadState() {
+  try { const raw = localStorage.getItem('dealtracker_v2'); if (raw) state.deals = JSON.parse(raw); }
+  catch(e) { console.error(e); }
+}
+function saveState() { localStorage.setItem('dealtracker_v2', JSON.stringify(state.deals)); }
+function uid() { return 'd_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); }
+
+/* API KEY */
+function getKey() { return localStorage.getItem('lbo_api_key')||''; }
+function saveApiKey() {
+  const k = document.getElementById('settingsApiKey').value.trim();
+  if (!k.startsWith('sk-ant')) { alert('Clé invalide — doit commencer par sk-ant-'); return; }
+  localStorage.setItem('lbo_api_key', k);
+  updateApiStatus();
+  flashSaved('✓ Clé enregistrée');
+}
+function saveApiKeyFromImport() {
+  const k = document.getElementById('apiKeyInput').value.trim();
+  if (!k.startsWith('sk-ant')) { alert('Clé invalide — doit commencer par sk-ant-'); return; }
+  localStorage.setItem('lbo_api_key', k);
+  updateApiStatus();
+  flashSaved('✓ Clé enregistrée');
+}
+function clearApiKey() {
+  localStorage.removeItem('lbo_api_key');
+  document.getElementById('settingsApiKey').value = '';
+  updateApiStatus();
+}
+function updateApiStatus() {
+  const has = !!getKey();
+  const status = document.getElementById('apiStatus');
+  if (status) status.innerHTML = has
+    ? '<span style="color:var(--green)">✓ Clé enregistrée — Import IA activé</span>'
+    : '<span style="color:var(--text3)">Aucune clé enregistrée</span>';
+  const banner = document.getElementById('apiBanner');
+  if (banner) {
+    banner.className = 'api-banner ' + (has ? 'ok' : 'need');
+    document.getElementById('apiTitle').textContent = has
+      ? '✓ Clé API enregistrée — Import intelligent activé'
+      : 'Clé API Anthropic requise pour l\'import intelligent';
+  }
+  const inp = document.getElementById('settingsApiKey');
+  if (inp) inp.value = getKey();
+}
+
+/* NAVIGATION */
+function showView(name) {
+  if (state.dirty && state.currentId && name !== 'fiche') {
+    if (!confirm('Modifications non enregistrées. Continuer ?')) return;
+    state.dirty = false;
+  }
+  document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+  document.getElementById('view-'+name).style.display = 'block';
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const idx = ['dashboard','deals','sourcing','stats','settings'].indexOf(name);
+  if (idx >= 0) document.querySelectorAll('.nav-item')[idx].classList.add('active');
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'deals') renderDealsList();
+  if (name === 'stats') renderStats();
+  if (name === 'settings') updateApiStatus();
+}
+
+function showTab(name) {
+  const names = ['info','import','input','retraite','ratios','verdict','notes'];
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', names[i]===name));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  if (name === 'import') updateApiStatus();
+}
+
+/* MODAL NEW DEAL */
+function openNewDeal() { document.getElementById('modalNewDeal').classList.add('active'); }
+function closeModal() { document.getElementById('modalNewDeal').classList.remove('active'); }
+function createDeal() {
+  const nom = document.getElementById('new_nom').value.trim();
+  if (!nom) { alert('Le nom est obligatoire'); return; }
+  const deal = {
+    id: uid(), nom,
+    secteur: document.getElementById('new_secteur').value,
+    ville: document.getElementById('new_ville').value,
+    source: document.getElementById('new_source').value,
+    status: 'contact', created: Date.now(), updated: Date.now(), data: {}
+  };
+  state.deals.unshift(deal);
+  saveState();
+  closeModal();
+  ['new_nom','new_ville','new_source'].forEach(id => document.getElementById(id).value = '');
+  openFiche(deal.id);
+}
+
+/* DASHBOARD */
+function renderDashboard() {
+  const deals = state.deals;
+  const byStatus = {};
+  deals.forEach(d => { byStatus[d.status] = (byStatus[d.status]||0)+1; });
+  const actifs = deals.length - (byStatus.abandon||0) - (byStatus.closing||0);
+  const analyses = deals.filter(d => d.data && d.data.ebe_r_moy).length;
+  const avgCA = deals.filter(d => d.data && d.data.ca && d.data.ca[2]).reduce((s,d,_,a) => s + d.data.ca[2]/a.length, 0);
+
+  document.getElementById('metrics').innerHTML = `
+    <div class="metric"><div class="metric-label">Total deals</div><div class="metric-value">${deals.length}</div><div class="metric-trend">${actifs} actifs</div></div>
+    <div class="metric"><div class="metric-label">En analyse</div><div class="metric-value metric-orange">${(byStatus.analyse||0)}</div><div class="metric-trend">à étudier</div></div>
+    <div class="metric"><div class="metric-label">Offres / Négoc.</div><div class="metric-value metric-accent">${(byStatus.offre||0)+(byStatus.negoc||0)}</div><div class="metric-trend">en cours</div></div>
+    <div class="metric"><div class="metric-label">Closing</div><div class="metric-value metric-green">${(byStatus.closing||0)}</div><div class="metric-trend">finalisés</div></div>
+    <div class="metric"><div class="metric-label">CA moyen analysé</div><div class="metric-value">${fmtCompact(avgCA)}</div><div class="metric-trend">sur ${analyses} dossiers</div></div>
+  `;
+  const recent = deals.slice(0,5);
+  if (!recent.length) {
+    document.getElementById('recent-deals').innerHTML = '<div class="empty"><div class="empty-icon">◇</div><div class="empty-title">Aucun deal pour le moment</div><div class="empty-sub">Cliquez sur "+ Nouveau deal" pour commencer</div></div>';
+  } else {
+    let html = '<table class="deals-tbl"><thead><tr><th>Société</th><th>Secteur</th><th>CA</th><th>Statut</th><th>Verdict</th></tr></thead><tbody>';
+    recent.forEach(d => { html += dealRowHtml(d); });
+    html += '</tbody></table>';
+    document.getElementById('recent-deals').innerHTML = html;
+  }
+}
+
+function renderDealsList() {
+  const filter = document.getElementById('filterStatus').value;
+  let deals = state.deals;
+  if (filter) deals = deals.filter(d => d.status === filter);
+  const tbody = document.getElementById('deals-tbody');
+  const empty = document.getElementById('deals-empty');
+  if (!deals.length) { tbody.innerHTML = ''; empty.style.display = 'block'; }
+  else { empty.style.display = 'none'; tbody.innerHTML = deals.map(dealRowHtml).join(''); }
+}
+
+function dealRowHtml(d) {
+  const ca = d.data && d.data.ca ? d.data.ca[2] : 0;
+  const prix = d.data && d.data.prix ? d.data.prix : 0;
+  const verdict = d.data && d.data.score !== undefined ? verdictBadge(d.data.score) : '<span style="color:var(--text3);font-size:12px">—</span>';
+  const when = new Date(d.updated).toLocaleDateString('fr-FR');
+  return `<tr class="clickable" onclick="openFiche('${d.id}')">
+    <td><div class="deal-name">${escapeHtml(d.nom)}</div><div class="deal-sector">${escapeHtml(d.ville||'')}</div></td>
+    <td>${secteurLabel(d.secteur)}</td>
+    <td>${ca>0?fmtE(ca):'—'}</td>
+    <td>${prix>0?fmtE(prix):'—'}</td>
+    <td>${statusChip(d.status)}</td>
+    <td>${verdict}</td>
+    <td style="color:var(--text3);font-size:12px">${when}</td>
+  </tr>`;
+}
+function statusChip(s) {
+  const m = {contact:['s-contact','1er contact'],nda:['s-nda','NDA signé'],analyse:['s-analyse','Analyse'],offre:['s-offre','Offre'],negoc:['s-negoc','Négoc.'],closing:['s-closing','Closing'],abandon:['s-abandon','Abandonné']};
+  const [c,l] = m[s]||['s-contact','?'];
+  return `<span class="status-chip ${c}">${l}</span>`;
+}
+function verdictBadge(score) {
+  if (score>=70) return `<span class="badge b-green">✓ ${score}/100</span>`;
+  if (score>=45) return `<span class="badge b-orange">⚠ ${score}/100</span>`;
+  return `<span class="badge b-red">✗ ${score}/100</span>`;
+}
+function secteurLabel(s){return {commerce:'Commerce',industrie:'Industrie',services:'Services',restauration:'Restauration',batiment:'BTP',sante:'Santé',autre:'Autre'}[s]||s;}
+
+/* FICHE */
+function openFiche(id) {
+  const d = state.deals.find(x => x.id === id);
+  if (!d) return;
+  state.currentId = id; state.dirty = false;
+  document.getElementById('fiche-name').textContent = d.nom;
+  document.getElementById('fiche-meta').innerHTML = `
+    <span>${secteurLabel(d.secteur)}</span>
+    ${d.ville?'<span>· '+escapeHtml(d.ville)+'</span>':''}
+    ${d.source?'<span>· Source : '+escapeHtml(d.source)+'</span>':''}
+  `;
+  document.getElementById('fiche-status').value = d.status;
+  document.getElementById('f_nom').value = d.nom||'';
+  document.getElementById('f_siren').value = d.siren||'';
+  document.getElementById('f_secteur').value = d.secteur||'services';
+  document.getElementById('f_forme').value = d.forme||'';
+  document.getElementById('f_ville').value = d.ville||'';
+  document.getElementById('f_effectif').value = d.effectif||'';
+  document.getElementById('f_cedant').value = d.cedant||'';
+  document.getElementById('f_email').value = d.email||'';
+  document.getElementById('f_tel').value = d.tel||'';
+  document.getElementById('f_source').value = d.source||'';
+  document.getElementById('f_notes').value = d.notes||'';
+  document.getElementById('f_next').value = d.next||'';
+  document.getElementById('f_next_date').value = d.next_date||'';
+  const f = d.finance||{};
+  ['ca2','ca1','ca0','achats2','achats1','achats0','sal2','sal1','sal0','amort2','amort1','amort0','rex2','rex1','rex0','rn2','rn1','rn0','bi_immo','bi_stocks','bi_clients','bi_acreances','bi_dispo','bi_vmp','bi_cp','bi_dflt','bi_fourn','bi_dfis','bi_act','bi_prov','prix_acq','taux_lbo','mult_ebe','sal_dir2','sal_dir1','sal_dir0','avn2','avn1','avn0','autre2','autre1','autre0','loyer','non_rec'].forEach(k => {
+    const el = document.getElementById(k);
+    if (el) el.value = f[k]!==undefined ? f[k] : el.defaultValue;
+  });
+  document.getElementById('duree_lbo').value = f.duree_lbo||'7';
+  calcR();
+  resetImport();
+  document.querySelectorAll('.view').forEach(v => v.style.display='none');
+  document.getElementById('view-fiche').style.display='block';
+  showTab('info');
+  if (d.data && d.data.ebe_r_moy !== undefined) computeAll(false);
+}
+
+function markDirty() { state.dirty = true; }
+
+function updateFicheStatus() {
+  if (!state.currentId) return;
+  const d = state.deals.find(x => x.id === state.currentId);
+  d.status = document.getElementById('fiche-status').value;
+  d.updated = Date.now();
+  saveState();
+}
+
+function saveCurrentDeal() {
+  if (!state.currentId) return;
+  const d = state.deals.find(x => x.id === state.currentId);
+  d.nom = document.getElementById('f_nom').value || d.nom;
+  d.siren = document.getElementById('f_siren').value;
+  d.secteur = document.getElementById('f_secteur').value;
+  d.forme = document.getElementById('f_forme').value;
+  d.ville = document.getElementById('f_ville').value;
+  d.effectif = document.getElementById('f_effectif').value;
+  d.cedant = document.getElementById('f_cedant').value;
+  d.email = document.getElementById('f_email').value;
+  d.tel = document.getElementById('f_tel').value;
+  d.source = document.getElementById('f_source').value;
+  d.notes = document.getElementById('f_notes').value;
+  d.next = document.getElementById('f_next').value;
+  d.next_date = document.getElementById('f_next_date').value;
+  const f = {};
+  ['ca2','ca1','ca0','achats2','achats1','achats0','sal2','sal1','sal0','amort2','amort1','amort0','rex2','rex1','rex0','rn2','rn1','rn0','bi_immo','bi_stocks','bi_clients','bi_acreances','bi_dispo','bi_vmp','bi_cp','bi_dflt','bi_fourn','bi_dfis','bi_act','bi_prov','prix_acq','taux_lbo','mult_ebe','sal_dir2','sal_dir1','sal_dir0','avn2','avn1','avn0','autre2','autre1','autre0','loyer','non_rec'].forEach(k => {
+    const el = document.getElementById(k);
+    if (el) f[k] = parseFloat(el.value)||0;
+  });
+  f.duree_lbo = document.getElementById('duree_lbo').value;
+  d.finance = f;
+  d.updated = Date.now();
+  state.dirty = false;
+  saveState();
+  flashSaved('✓ Enregistré');
+}
+
+function flashSaved(msg='✓ Enregistré'){
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText='position:fixed;bottom:20px;right:20px;background:var(--green);color:#fff;padding:10px 16px;border-radius:6px;font-weight:600;font-size:13px;z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,0.4)';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 1600);
+}
+
+function deleteCurrentDeal() {
+  if (!state.currentId) return;
+  if (!confirm('Supprimer définitivement ce deal ?')) return;
+  state.deals = state.deals.filter(d => d.id !== state.currentId);
+  state.currentId = null;
+  saveState();
+  showView('deals');
+}
+
+function computeAndSave() { saveCurrentDeal(); computeAll(true); }
+
+/* IMPORT IA */
+function handleFiles(files) {
+  const arr = Array.from(files);
+  if (!arr.length) return;
+  if (!getKey()) { alert('Saisissez d\'abord votre clé API Anthropic dans Paramètres ou ci-dessus.'); return; }
+  if (!state.currentId) { alert('Ouvrez d\'abord un deal'); return; }
+  arr.forEach(addFileItem);
+  document.getElementById('logCard').style.display = 'block';
+  processFiles(arr);
+}
+
+function addFileItem(file) {
+  const id = 'fi_'+file.name.replace(/\W/g,'_');
+  const ext = file.name.split('.').pop().toLowerCase();
+  const icon = ext==='pdf'?'📄':['xlsx','xls'].includes(ext)?'📊':'📋';
+  const div = document.createElement('div');
+  div.className = 'file-item';
+  div.innerHTML = `<span class="file-icon">${icon}</span>
+    <div class="file-info">
+      <div class="file-name">${escapeHtml(file.name)}</div>
+      <div class="file-size">${(file.size/1024).toFixed(0)} Ko</div>
+      <div class="pbar"><div class="pfill" id="pfill_${id}" style="width:0%"></div></div>
+    </div>
+    <span class="file-status st-wait" id="stat_${id}">En attente</span>`;
+  document.getElementById('fileList').appendChild(div);
+}
+
+function log(msg, type='info') {
+  const box = document.getElementById('logBox');
+  const d = document.createElement('div');
+  d.className = 'l'+type;
+  d.textContent = '['+new Date().toLocaleTimeString('fr-FR')+'] '+msg;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
+
+function setProgress(pct) {
+  document.getElementById('pfill').style.width = pct+'%';
+  document.getElementById('plabel').textContent = Math.round(pct)+'%';
+}
+
+async function processFiles(files) {
+  log('Démarrage extraction IA...','info');
+  let combined = {};
+  for (let i=0; i<files.length; i++) {
+    const file = files[i];
+    const fid = 'fi_'+file.name.replace(/\W/g,'_');
+    document.getElementById('stat_'+fid).textContent = 'Lecture…';
+    document.getElementById('stat_'+fid).className = 'file-status st-read';
+    log('Analyse : '+file.name,'info');
+    setProgress(i/files.length*50);
+    try {
+      const res = await extractFile(file);
+      Object.entries(res).forEach(([k,val])=>{ if(val && val!==0) combined[k]=val; });
+      document.getElementById('stat_'+fid).textContent = '✓ Extrait';
+      document.getElementById('stat_'+fid).className = 'file-status st-ok';
+      document.getElementById('pfill_'+fid).style.width = '100%';
+      log('✓ '+file.name+' extrait','ok');
+    } catch(e) {
+      document.getElementById('stat_'+fid).textContent = 'Erreur';
+      document.getElementById('stat_'+fid).className = 'file-status st-err';
+      log('✗ '+e.message,'err');
+    }
+    setProgress(50+(i+1)/files.length*45);
+  }
+  setProgress(100);
+  extractedData = combined;
+  log('✓ Extraction terminée','ok');
+  showPreview(combined);
+}
+
+async function extractFile(file) {
+  const base64 = await toBase64(file);
+  const ext = file.name.split('.').pop().toLowerCase();
+  const isPdf = ext==='pdf';
+  const mediaType = isPdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  const prompt = `Tu es expert-comptable spécialisé en analyse financière pour reprise d'entreprise.
+Analyse ce document (bilan, compte de résultat, liasse fiscale 2050/2051/2052).
+Extrais les valeurs numériques dans ce JSON strict. Utilise 0 si absent.
+Réponds UNIQUEMENT avec le JSON brut, sans texte ni balises markdown.
+
+{"ca_n2":0,"ca_n1":0,"ca_n":0,"rex_n2":0,"rex_n1":0,"rex_n":0,"amort_n2":0,"amort_n1":0,"amort_n":0,"sal_n2":0,"sal_n1":0,"sal_n":0,"achats_n2":0,"achats_n1":0,"achats_n":0,"rn_n2":0,"rn_n1":0,"rn_n":0,"bi_immo":0,"bi_stocks":0,"bi_clients":0,"bi_acreances":0,"bi_dispo":0,"bi_vmp":0,"bi_cp":0,"bi_dflt":0,"bi_fourn":0,"bi_dfis":0,"bi_act":0,"bi_prov":0,"annee_n":0}`;
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': getKey(),
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 1000,
+      messages: [{ role:'user', content:[
+        { type:'document', source:{ type:'base64', media_type:mediaType, data:base64 }},
+        { type:'text', text:prompt }
+      ]}]
+    })
+  });
+  if (!resp.ok) {
+    let errMsg = '';
+    try { const e = await resp.json(); errMsg = e.error?.message || ''; } catch {}
+    if (resp.status === 404) throw new Error('Modèle non disponible avec cette clé. ' + errMsg);
+    if (resp.status === 401) throw new Error('Clé API invalide ou expirée. Vérifiez la clé dans Paramètres.');
+    if (resp.status === 429) throw new Error('Limite de requêtes atteinte. Réessayez dans 1 minute.');
+    if (resp.status === 400 && errMsg.includes('credit')) throw new Error('Crédits insuffisants. Rechargez sur console.anthropic.com');
+    throw new Error('Erreur API '+resp.status+' — '+errMsg);
+  }
+  const data = await resp.json();
+  const text = data.content.map(c=>c.text||'').join('').trim();
+  const clean = text.replace(/```json|```/g,'').trim();
+  try { return JSON.parse(clean); }
+  catch { const m=clean.match(/\{[\s\S]*\}/); if(m) return JSON.parse(m[0]); throw new Error('Réponse non parseable'); }
+}
+
+async function toBase64(file) {
+  return new Promise((res,rej)=>{
+    const r = new FileReader();
+    r.onload = ()=>res(r.result.split(',')[1]);
+    r.onerror = ()=>rej(new Error('Lecture impossible'));
+    r.readAsDataURL(file);
+  });
+}
+
+function showPreview(d) {
+  const rows = [
+    ['CA N-2',d.ca_n2],['CA N-1',d.ca_n1],['CA N',d.ca_n],
+    ['Résultat exploitation N',d.rex_n],['Amortissements N',d.amort_n],
+    ['Salaires & charges N',d.sal_n],['Résultat net N',d.rn_n],
+    ['Actif immobilisé',d.bi_immo],['Stocks',d.bi_stocks],
+    ['Créances clients',d.bi_clients],['Disponibilités',d.bi_dispo],
+    ['Capitaux propres',d.bi_cp],['Dettes financières LT',d.bi_dflt],
+    ['Année N',d.annee_n||'?']
+  ];
+  let html = '';
+  rows.forEach(([lbl,val])=>{
+    const disp = (typeof val==='number'&&lbl!=='Année N') ? fmtE(val) : (val||'—');
+    const ok = val && val!==0;
+    html += `<tr><td>${lbl}</td><td style="color:${ok?'var(--green)':'var(--text3)'}">${disp}</td></tr>`;
+  });
+  document.getElementById('previewTable').innerHTML = html;
+  document.getElementById('previewCard').style.display = 'block';
+}
+
+function applyExtracted() {
+  const d = extractedData;
+  const map = {ca2:'ca_n2',ca1:'ca_n1',ca0:'ca_n',rex2:'rex_n2',rex1:'rex_n1',rex0:'rex_n',amort2:'amort_n2',amort1:'amort_n1',amort0:'amort_n',sal2:'sal_n2',sal1:'sal_n1',sal0:'sal_n',achats2:'achats_n2',achats1:'achats_n1',achats0:'achats_n',rn2:'rn_n2',rn1:'rn_n1',rn0:'rn_n',bi_immo:'bi_immo',bi_stocks:'bi_stocks',bi_clients:'bi_clients',bi_acreances:'bi_acreances',bi_dispo:'bi_dispo',bi_vmp:'bi_vmp',bi_cp:'bi_cp',bi_dflt:'bi_dflt',bi_fourn:'bi_fourn',bi_dfis:'bi_dfis',bi_act:'bi_act',bi_prov:'bi_prov'};
+  Object.entries(map).forEach(([fid,key])=>{ if(d[key]!==undefined&&d[key]!==0) sv(fid,d[key]); });
+  markDirty();
+  flashSaved('✓ Données importées');
+}
+
+function resetImport() {
+  document.getElementById('fileList').innerHTML='';
+  document.getElementById('logCard').style.display='none';
+  document.getElementById('previewCard').style.display='none';
+  document.getElementById('logBox').innerHTML='';
+  extractedData = {};
+}
+
+/* CALCULS */
+const v = id => parseFloat(document.getElementById(id)?.value)||0;
+const sv = (id, val) => { const el = document.getElementById(id); if (el) el.value = Math.round(val)||0; };
+const avg = a => a.reduce((s,x)=>s+x,0)/a.length;
+function fmt(n,d=0){ if(isNaN(n))return'N/A'; return new Intl.NumberFormat('fr-FR',{maximumFractionDigits:d,minimumFractionDigits:d}).format(n); }
+function fmtE(n){ return fmt(n)+' €'; }
+function fmtP(n){ return fmt(n*100,1)+' %'; }
+function fmtX(n){ return fmt(n,2)+'x'; }
+function fmtCompact(n){ if(!n)return'—'; if(n>=1e6)return fmt(n/1e6,1)+' M€'; if(n>=1e3)return fmt(n/1e3,0)+' k€'; return fmt(n,0)+' €'; }
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function calcR() {
+  sv('total_retrait2', v('sal_dir2')+v('avn2')+v('autre2'));
+  sv('total_retrait1', v('sal_dir1')+v('avn1')+v('autre1'));
+  sv('total_retrait0', v('sal_dir0')+v('loyer')+v('non_rec')+v('avn0')+v('autre0'));
+}
+
+function computeAll(showRatios) {
+  calcR();
+  const D = {
+    ca:[v('ca2'),v('ca1'),v('ca0')],
+    rex:[v('rex2'),v('rex1'),v('rex0')],
+    amort:[v('amort2'),v('amort1'),v('amort0')],
+    rn:[v('rn2'),v('rn1'),v('rn0')],
+    retrait:[v('total_retrait2'),v('total_retrait1'),v('total_retrait0')],
+    bi_immo:v('bi_immo'),bi_stocks:v('bi_stocks'),bi_clients:v('bi_clients'),
+    bi_acreances:v('bi_acreances'),bi_dispo:v('bi_dispo'),bi_vmp:v('bi_vmp'),
+    bi_cp:v('bi_cp'),bi_dflt:v('bi_dflt'),bi_fourn:v('bi_fourn'),
+    bi_dfis:v('bi_dfis'),bi_act:v('bi_act'),bi_prov:v('bi_prov'),
+    prix:v('prix_acq'),duree:parseFloat(document.getElementById('duree_lbo').value)||7,
+    taux:v('taux_lbo')/100,mult:v('mult_ebe')||4.5
+  };
+  D.ebe = D.rex.map((r,i)=>r+D.amort[i]);
+  D.ebe_r = D.ebe.map((e,i)=>e+D.retrait[i]);
+  D.caf = D.rn.map((r,i)=>r+D.amort[i]);
+  D.caf_r = D.caf.map((c,i)=>c+D.retrait[i]);
+  D.ebe_r_moy = avg(D.ebe_r); D.caf_r_moy = avg(D.caf_r);
+  D.ca_moy = avg(D.ca); D.rn_moy = avg(D.rn);
+  D.bfr = D.bi_stocks+D.bi_clients+D.bi_acreances-D.bi_fourn-D.bi_dfis;
+  D.tresorerie = D.bi_dispo+D.bi_vmp-D.bi_dflt;
+  D.dettes_tot = D.bi_dflt+D.bi_fourn+D.bi_dfis+D.bi_act;
+  D.valo = D.ebe_r_moy*D.mult;
+  D.prix_final = D.prix>0 ? D.prix : D.valo;
+  D.fourch_bas = D.valo*0.7; D.fourch_haut = D.valo*1.1;
+  D.croissance_ca = D.ca[0]>0 ? (D.ca[2]/D.ca[0]-1) : 0;
+  D.marge_ebe_r = D.ca_moy>0 ? D.ebe_r_moy/D.ca_moy : 0;
+  D.marge_ebe_r_n = D.ca[2]>0 ? D.ebe_r[2]/D.ca[2] : 0;
+  D.caf_r_ca = D.ca_moy>0 ? D.caf_r_moy/D.ca_moy : 0;
+  D.bfr_ca = D.ca[2]>0 ? D.bfr/D.ca[2] : 0;
+  D.ratio_endet = D.bi_cp>0 ? D.dettes_tot/D.bi_cp : 0;
+  D.rentab_nette = D.ca_moy>0 ? D.rn_moy/D.ca_moy : 0;
+  const p=D.prix_final, r=D.taux, n=D.duree;
+  D.annuite = (r>0&&n>0) ? p*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1) : p/Math.max(n,1);
+  D.max_lbo = D.caf_r_moy*n;
+  D.dscr = D.annuite>0 ? D.caf_r[2]/D.annuite : 0;
+  D.dscr_moy = D.annuite>0 ? D.caf_r_moy/D.annuite : 0;
+  D.payback = D.caf_r_moy>0 ? D.prix_final/D.caf_r_moy : 99;
+  D.ev_ebitda = D.ebe_r_moy>0 ? D.prix_final/D.ebe_r_moy : 0;
+
+  let pts=0, tot=0;
+  const chk=(val,g,o)=>{tot+=10;if(val>=g)pts+=10;else if(val>=o)pts+=5;};
+  chk(D.croissance_ca,0.10,0); chk(D.marge_ebe_r,0.15,0.10); chk(D.caf_r_ca,0.10,0.05);
+  chk(1-D.bfr_ca,0.80,0.70); chk(D.tresorerie>0?1:0,1,0); chk(2-D.ratio_endet,1,0);
+  chk(D.rentab_nette,0.08,0.04); chk(D.dscr,1.3,1.0); chk(8-D.ev_ebitda,4,2); chk(8-D.payback,3,0);
+  D.score = Math.round(pts/tot*100);
+
+  renderRatios(D);
+  renderVerdict(D);
+
+  if (state.currentId) {
+    const deal = state.deals.find(x => x.id === state.currentId);
+    if (deal) {
+      deal.data = { ca:D.ca, ebe_r_moy:D.ebe_r_moy, caf_r_moy:D.caf_r_moy, valo:D.valo, prix:D.prix_final, score:D.score, dscr:D.dscr, tresorerie:D.tresorerie, bfr:D.bfr };
+      deal.updated = Date.now();
+      saveState();
+    }
+  }
+  if (showRatios) showTab('ratios');
+}
+
+function renderRatios(D){
+  const ratios=[
+    {n:'Croissance CA',s:'N-2 → N',m:fmtP(D.croissance_ca),d:fmtP(D.ca[2]>0?D.ca[2]/D.ca[0]-1:0),c:D.croissance_ca>0.1?'green':D.croissance_ca>0?'orange':'red'},
+    {n:'Marge EBE retraité',s:'/ CA moyen',m:fmtP(D.marge_ebe_r),d:fmtP(D.marge_ebe_r_n),c:D.marge_ebe_r>0.15?'green':D.marge_ebe_r>0.10?'orange':'red'},
+    {n:'CAF retraitée / CA',s:'Capacité cash',m:fmtP(D.caf_r_ca),d:'—',c:D.caf_r_ca>0.10?'green':D.caf_r_ca>0.05?'orange':'red'},
+    {n:'BFR / CA',s:'Intensité BFR',m:fmtP(D.bfr_ca),d:'—',c:D.bfr_ca<0.20?'green':D.bfr_ca<0.30?'orange':'red'},
+    {n:'Trésorerie nette',s:'Dispo − Dettes fin.',m:fmtE(Math.round(D.tresorerie)),d:'—',c:D.tresorerie>0?'green':D.tresorerie>-50000?'orange':'red'},
+    {n:'Ratio endettement',s:'Dettes / CP',m:fmtX(D.ratio_endet),d:'—',c:D.ratio_endet<1?'green':D.ratio_endet<2?'orange':'red'},
+    {n:'Rentabilité nette',s:'RN / CA',m:fmtP(D.rentab_nette),d:fmtP(D.ca[2]>0?D.rn[2]/D.ca[2]:0),c:D.rentab_nette>0.08?'green':D.rentab_nette>0.04?'orange':'red'},
+    {n:'DSCR',s:'CAF / Annuité',m:fmtX(D.dscr_moy),d:fmtX(D.dscr),c:D.dscr>1.3?'green':D.dscr>1.0?'orange':'red'},
+    {n:'EV / EBE',s:'Multiple payé',m:fmtX(D.ev_ebitda),d:'—',c:D.ev_ebitda<4?'green':D.ev_ebitda<6?'orange':'red'},
+    {n:'Payback',s:'Prix / CAF moy.',m:fmt(D.payback,1)+' ans',d:'—',c:D.payback<5?'green':D.payback<8?'orange':'red'}
+  ];
+  const lbl=c=>c==='green'?'✓ OK':c==='orange'?'⚠ Attention':'✗ Risque';
+  let html=`<div class="metrics">
+    <div class="metric"><div class="metric-label">EBE retraité moy.</div><div class="metric-value">${fmtE(Math.round(D.ebe_r_moy))}</div></div>
+    <div class="metric"><div class="metric-label">CAF retraitée moy.</div><div class="metric-value">${fmtE(Math.round(D.caf_r_moy))}</div></div>
+    <div class="metric"><div class="metric-label">Valorisation</div><div class="metric-value metric-accent">${fmtE(Math.round(D.valo))}</div></div>
+    <div class="metric"><div class="metric-label">Annuité LBO</div><div class="metric-value metric-orange">${fmtE(Math.round(D.annuite))}</div></div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="ratio-hdr">
+      <span style="flex:2">Indicateur</span>
+      <div style="display:flex;gap:6px;flex:2;justify-content:flex-end">
+        <span style="min-width:72px;text-align:right">Moy. 3 ans</span>
+        <span style="min-width:72px;text-align:right">Année N</span>
+        <span style="min-width:58px;text-align:center">Statut</span>
+      </div>
+    </div>`;
+  ratios.forEach(r=>{
+    html+=`<div class="ratio-row">
+      <div class="ratio-name">${r.n}<br><span class="ratio-sub">${r.s}</span></div>
+      <div class="ratio-vals">
+        <span class="ratio-val">${r.m}</span>
+        <span class="ratio-val">${r.d}</span>
+        <span class="badge b-${r.c}">${lbl(r.c)}</span>
+      </div>
+    </div>`;
+  });
+  html+='</div>';
+  document.getElementById('ratios-content').innerHTML=html;
+}
+
+function renderVerdict(D){
+  let vc,vt,vs;
+  if(D.score>=70){vc='go';vt='✓ Deal faisable';vs='Indicateurs favorables. LBO sans apport finançable sous réserve de validation bancaire et due diligence.';}
+  else if(D.score>=45){vc='watch';vt='⚠ Deal risqué — À négocier';vs='Points de vigilance. Renégocier le prix ou obtenir des garanties (BPI France, caution vendeur).';}
+  else{vc='nogo';vt='✗ Deal non recommandé';vs='Trop de signaux négatifs. Risque de défaut élevé. Passer ou exiger une décote majeure.';}
+  let tbody='', enc=D.prix_final;
+  for(let y=1;y<=D.duree;y++){
+    const int=enc*D.taux, cap=D.annuite-int; enc=Math.max(0,enc-cap);
+    const ds=D.annuite>0?D.caf_r_moy/D.annuite:0;
+    const cls=ds>1.3?'t-ok':ds>1?'t-warn':'t-ko';
+    tbody+=`<tr><td>${y}</td><td>${fmtE(Math.round(enc+cap))}</td><td>${fmtE(Math.round(int))}</td><td>${fmtE(Math.round(cap))}</td><td>${fmtE(Math.round(enc))}</td><td class="${cls}">${fmt(ds,2)}x</td></tr>`;
+  }
+  const alertes=[
+    [D.dscr<1.2,'red',`DSCR insuffisant (${fmt(D.dscr,2)}x < 1,2x) — Renégocier ou solliciter BPI France`],
+    [D.bfr>50000,'warn',`BFR élevé (${fmtE(Math.round(D.bfr))}) — Prévoir une ligne de trésorerie`],
+    [D.tresorerie<0,'warn',`Trésorerie nette négative (${fmtE(Math.round(D.tresorerie))}) — Déduire la dette du prix`],
+    [D.ev_ebitda>6,'red',`Multiple élevé (${fmtX(D.ev_ebitda)}) — Prix trop haut pour LBO sans apport`],
+    [D.marge_ebe_r<0.10,'warn',`Marge EBE faible (${fmtP(D.marge_ebe_r)}) — Peu de marge pour absorber un choc`],
+    [D.croissance_ca<0,'red','Décroissance du CA — Analyser les causes avant engagement'],
+    [D.score>=70&&D.dscr>=1.2,'green','Signaux positifs — Dossier bancable, poursuivre la due diligence']
+  ].map(([c,t,m])=>c?`<div class="alert a-${t}">${m}</div>`:'').join('');
+  document.getElementById('verdict-content').innerHTML=`
+  <div class="verdict-box v-${vc}">
+    <div class="verdict-title">${vt}</div>
+    <div style="font-size:13px;color:var(--text2);margin-top:4px">${vs}</div>
+    <div style="margin-top:14px"><div style="font-size:11px;color:var(--text3);margin-bottom:4px">Score : ${D.score}/100</div>
+    <div class="sbar"><div class="sfill" style="width:${D.score}%;background:${D.score>=70?'var(--green)':D.score>=45?'var(--orange)':'var(--red)'}"></div></div></div>
+  </div>
+  <div class="grid2" style="margin-bottom:14px">
+    <div class="fourch">
+      <div class="fourch-title">Fourchette de valorisation</div>
+      <div style="display:flex;align-items:center;gap:10px;margin:8px 0">
+        <div class="fourch-val">${fmtE(Math.round(D.fourch_bas))}</div>
+        <span style="color:var(--text3);font-size:18px">→</span>
+        <div class="fourch-val">${fmtE(Math.round(D.fourch_haut))}</div>
+      </div>
+      <div style="font-size:11px;color:var(--blue)">EBE retraité × ${fmt(D.mult*0.7,1)}x → ${fmt(D.mult*1.1,1)}x</div>
+    </div>
+    <div class="fourch" style="background:var(--green-bg);border-color:var(--green-bd)">
+      <div class="fourch-title" style="color:var(--green)">Capacité max LBO — ${D.duree} ans</div>
+      <div class="fourch-val" style="color:var(--green);margin:8px 0">${fmtE(Math.round(D.max_lbo))}</div>
+      <div style="font-size:11px;color:var(--green)">CAF retraitée × ${D.duree} ans</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="card-title">Plan de remboursement · ${fmtE(Math.round(D.prix_final))} · ${fmt(D.taux*100,1)}% · ${D.duree} ans</div></div>
+    <div style="overflow-x:auto">
+      <table class="lbo-tbl">
+        <thead><tr><th>Année</th><th>Capital début</th><th>Intérêts</th><th>Capital remb.</th><th>Capital restant</th><th>DSCR</th></tr></thead>
+        <tbody>${tbody}</tbody>
+      </table>
+    </div>
+  </div>
+  <div>${alertes}</div>`;
+}
+
+/* STATS */
+function renderStats() {
+  const deals = state.deals;
+  if (!deals.length) {
+    document.getElementById('stats-content').innerHTML = '<div class="empty"><div class="empty-icon">◇</div><div class="empty-title">Aucun deal à analyser</div></div>';
+    return;
+  }
+  const byStatus={}, bySecteur={}, scores=[];
+  deals.forEach(d => {
+    byStatus[d.status] = (byStatus[d.status]||0)+1;
+    bySecteur[d.secteur] = (bySecteur[d.secteur]||0)+1;
+    if (d.data && d.data.score!==undefined) scores.push(d.data.score);
+  });
+  const avgScore = scores.length ? scores.reduce((s,x)=>s+x,0)/scores.length : 0;
+  const goDeals = scores.filter(s => s>=70).length;
+  let html = `<div class="metrics">
+    <div class="metric"><div class="metric-label">Total deals</div><div class="metric-value">${deals.length}</div></div>
+    <div class="metric"><div class="metric-label">Score moyen</div><div class="metric-value ${avgScore>=70?'metric-green':avgScore>=45?'metric-orange':''}">${Math.round(avgScore)}/100</div></div>
+    <div class="metric"><div class="metric-label">Deals go</div><div class="metric-value metric-green">${goDeals}</div></div>
+    <div class="metric"><div class="metric-label">Analysés</div><div class="metric-value">${scores.length}</div></div>
+  </div>`;
+  const statusLabels = {contact:'1er contact',nda:'NDA signé',analyse:'Analyse',offre:'Offre',negoc:'Négociation',closing:'Closing',abandon:'Abandonné'};
+  html += `<div class="card"><div class="card-head"><div class="card-title">Répartition par statut</div></div>`;
+  Object.entries(byStatus).forEach(([s,n]) => {
+    const pct = (n/deals.length*100).toFixed(0);
+    html += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <div style="flex:0 0 130px;font-size:13px">${statusLabels[s]||s}</div>
+      <div style="flex:1;height:22px;background:var(--surface2);border-radius:4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--accent)"></div></div>
+      <div style="flex:0 0 60px;text-align:right;font-size:12px;color:var(--text2)">${n} (${pct}%)</div>
+    </div>`;
+  });
+  html += `</div><div class="card"><div class="card-head"><div class="card-title">Répartition par secteur</div></div>`;
+  Object.entries(bySecteur).forEach(([s,n]) => {
+    const pct = (n/deals.length*100).toFixed(0);
+    html += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <div style="flex:0 0 130px;font-size:13px">${secteurLabel(s)}</div>
+      <div style="flex:1;height:22px;background:var(--surface2);border-radius:4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--purple)"></div></div>
+      <div style="flex:0 0 60px;text-align:right;font-size:12px;color:var(--text2)">${n} (${pct}%)</div>
+    </div>`;
+  });
+  html += `</div>`;
+  document.getElementById('stats-content').innerHTML = html;
+}
+
+/* EXPORT/IMPORT */
+function exportData() {
+  const blob = new Blob([JSON.stringify(state.deals,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'deal-tracker-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click(); URL.revokeObjectURL(url);
+}
+function importData(file) {
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data)) throw new Error();
+      if (confirm(`Importer ${data.length} deals ? Les données actuelles seront remplacées.`)) {
+        state.deals = data; saveState();
+        flashSaved('✓ Import réussi');
+        showView('deals');
+      }
+    } catch(err) { alert('Fichier invalide'); }
+  };
+  r.readAsText(file);
+}
+function clearAllData() {
+  if (!confirm('Effacer DÉFINITIVEMENT toutes vos données ? Cette action est irréversible.')) return;
+  if (!confirm('Vraiment sûr ?')) return;
+  state.deals = []; saveState();
+  showView('dashboard');
+}
+
+loadState();
+renderDashboard();
+updateApiStatus();
+</script>
+</body>
+</html>
