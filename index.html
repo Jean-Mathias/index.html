@@ -1001,7 +1001,7 @@ Réponds UNIQUEMENT avec le JSON brut, sans texte ni balises markdown.
       'anthropic-dangerous-direct-browser-access': 'true'
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-5',
       max_tokens: 1000,
       messages: [{ role:'user', content:[
         { type:'document', source:{ type:'base64', media_type:mediaType, data:base64 }},
@@ -1009,7 +1009,15 @@ Réponds UNIQUEMENT avec le JSON brut, sans texte ni balises markdown.
       ]}]
     })
   });
-  if (!resp.ok) throw new Error('Erreur API '+resp.status+' — vérifiez clé et crédits');
+  if (!resp.ok) {
+    let errMsg = '';
+    try { const e = await resp.json(); errMsg = e.error?.message || ''; } catch {}
+    if (resp.status === 404) throw new Error('Modèle non disponible avec cette clé. ' + errMsg);
+    if (resp.status === 401) throw new Error('Clé API invalide ou expirée. Vérifiez la clé dans Paramètres.');
+    if (resp.status === 429) throw new Error('Limite de requêtes atteinte. Réessayez dans 1 minute.');
+    if (resp.status === 400 && errMsg.includes('credit')) throw new Error('Crédits insuffisants. Rechargez sur console.anthropic.com');
+    throw new Error('Erreur API '+resp.status+' — '+errMsg);
+  }
   const data = await resp.json();
   const text = data.content.map(c=>c.text||'').join('').trim();
   const clean = text.replace(/```json|```/g,'').trim();
